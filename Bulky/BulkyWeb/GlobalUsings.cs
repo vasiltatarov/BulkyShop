@@ -5,5 +5,6 @@ global using System.Diagnostics;
 global using Microsoft.AspNetCore.Mvc;
 global using Microsoft.EntityFrameworkCore;
 
-global using BulkyWeb.Data;
-global using BulkyWeb.Models;
+global using Bulky.Data.Data;
+
+global using Bulky.Models;
