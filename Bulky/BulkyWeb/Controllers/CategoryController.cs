@@ -2,16 +2,16 @@
 
 public class CategoryController : Controller
 {
-    private readonly ApplicationDbContext db;
+    private readonly ICategoryRepository categoryRepository;
 
-    public CategoryController(ApplicationDbContext db)
+    public CategoryController(ICategoryRepository categoryRepository)
     {
-        this.db = db;
+        this.categoryRepository = categoryRepository;
     }
 
     public IActionResult Index()
     {
-        var categories = db.Categories.OrderBy(x => x.DisplayOrder).ToList();
+        var categories = this.categoryRepository.GetAll().OrderBy(x => x.DisplayOrder).ToList();
 
         return this.View(categories);
     }
@@ -30,8 +30,8 @@ public class CategoryController : Controller
             //_unitOfWork.Save();
 
             TempData["success"] = "Category created successfully";
-            this.db.Categories.Add(category);
-            this.db.SaveChanges();
+            this.categoryRepository.Add(category);
+            this.categoryRepository.Save();
 
             return RedirectToAction("Index");
         }
@@ -42,7 +42,7 @@ public class CategoryController : Controller
     public IActionResult Edit(int id)
     {
         //var category = _unitOfWork.Category.Get(u => u.Id == id);
-        var category = this.db.Categories.FirstOrDefault(x => x.Id == id);
+        var category = this.categoryRepository.Get(x => x.Id == id);
         if (category == null)
         {
             return NotFound();
@@ -60,8 +60,8 @@ public class CategoryController : Controller
             //_unitOfWork.Save();
 
             TempData["success"] = "Category updated successfully";
-            this.db.Categories.Update(category);
-            this.db.SaveChanges();
+            this.categoryRepository.Update(category);
+            this.categoryRepository.Save();
 
             return RedirectToAction("Index");
         }
@@ -72,7 +72,7 @@ public class CategoryController : Controller
     public IActionResult Delete(int id)
     {
         //Category? categoryFromDb = _unitOfWork.Category.Get(u => u.Id == id);
-        var category = this.db.Categories.FirstOrDefault(x => x.Id == id);
+        var category = this.categoryRepository.Get(x => x.Id == id);
         if (category == null)
         {
             return NotFound();
@@ -85,7 +85,7 @@ public class CategoryController : Controller
     public IActionResult DeletePOST(int id)
     {
         //Category? obj = _unitOfWork.Category.Get(u => u.Id == id);
-        var category = this.db.Categories.FirstOrDefault(x => x.Id == id);
+        var category = this.categoryRepository.Get(x => x.Id == id);
         if (category == null)
         {
             return NotFound();
@@ -93,8 +93,8 @@ public class CategoryController : Controller
 
         //_unitOfWork.Category.Remove(obj);
         //_unitOfWork.Save();
-        this.db.Categories.Remove(category);
-        this.db.SaveChanges();
+        this.categoryRepository.Remove(category);
+        this.categoryRepository.Save();
         TempData["success"] = "Category deleted successfully";
 
         return RedirectToAction("Index");

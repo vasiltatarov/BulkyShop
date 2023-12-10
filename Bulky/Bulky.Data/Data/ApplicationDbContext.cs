@@ -1,8 +1,5 @@
 ﻿namespace Bulky.Data.Data;
 
-using Bulky.Models;
-using Microsoft.EntityFrameworkCore;
-
 public class ApplicationDbContext : DbContext
 {
     public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
