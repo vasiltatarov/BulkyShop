@@ -9,11 +9,6 @@ public class CategoryRepository : Repository<Category>, ICategoryRepository
         this.dbContext = dbContext;
     }
 
-    public void Save()
-    {
-        this.dbContext.SaveChanges();
-    }
-
     public void Update(Category category)
     {
         this.dbContext.Categories.Update(category);
