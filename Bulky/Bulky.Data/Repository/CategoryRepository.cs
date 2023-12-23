@@ -9,8 +9,8 @@ public class CategoryRepository : Repository<Category>, ICategoryRepository
         this.dbContext = dbContext;
     }
 
-    public void Update(Category category)
+    public void Update(Category entity)
     {
-        this.dbContext.Categories.Update(category);
+        this.dbContext.Categories.Update(entity);
     }
 }

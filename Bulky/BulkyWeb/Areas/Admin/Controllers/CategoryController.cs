@@ -17,19 +17,17 @@ public class CategoryController : Controller
         return View(categories);
     }
 
-    public IActionResult Create()
-    {
-        return View();
-    }
+    public IActionResult Create() => View();
 
     [HttpPost]
     public IActionResult Create(Category category)
     {
         if (ModelState.IsValid)
         {
-            TempData["success"] = "Category created successfully";
             unitOfWork.CategoryRepository.Add(category);
             unitOfWork.Save();
+
+            TempData["success"] = string.Format(WebConstants.SuccessCreateNotification, nameof(Category));
 
             return RedirectToAction("Index");
         }
@@ -54,9 +52,10 @@ public class CategoryController : Controller
     {
         if (ModelState.IsValid)
         {
-            TempData["success"] = "Category updated successfully";
             unitOfWork.CategoryRepository.Update(category);
             unitOfWork.Save();
+
+            TempData["success"] = string.Format(WebConstants.SuccessEditNotification, nameof(Category));
 
             return RedirectToAction("Index");
         }
@@ -88,7 +87,8 @@ public class CategoryController : Controller
 
         unitOfWork.CategoryRepository.Remove(category);
         unitOfWork.Save();
-        TempData["success"] = "Category deleted successfully";
+
+        TempData["success"] = string.Format(WebConstants.SuccessDeleteNotification, nameof(Category));
 
         return RedirectToAction("Index");
     }

@@ -10,3 +10,6 @@ global using Bulky.Data.Repository;
 global using Bulky.Data.Repository.IRepository;
 
 global using Bulky.Models;
+global using Bulky.Models.ViewModels;
+
+global using Bulky.Utility;
