@@ -12,50 +12,62 @@ public class ProductController : Controller
 
     public IActionResult Index() => View();
 
-    public IActionResult Create() => View();
-
-    [HttpPost]
-    public IActionResult Create(Product product)
+    public IActionResult Upsert(int? id)
     {
-        if (ModelState.IsValid)
+        var productVm = new ProductViewModel
         {
-            this.unitOfWork.ProductRepository.Add(product);
-            this.unitOfWork.Save();
+            CategoryList = this.unitOfWork.CategoryRepository
+                .GetAll()
+                .Select(x => new SelectListItem
+                {
+                    Text = x.Name,
+                    Value = x.Id.ToString()
+                })
+                .ToList(),
+            Product = new()
+        };
 
-            TempData["success"] = string.Format(WebConstants.SuccessCreateNotification, nameof(Product));
-
-            return RedirectToAction("Index");
+        if (id != null && id != 0)
+        {
+            productVm.Product = this.unitOfWork.ProductRepository.Get(x => x.Id == id);
         }
 
-        return View();
-    }
-
-    public IActionResult Edit(int id)
-    {
-        var product = this.unitOfWork.ProductRepository.Get(x => x.Id == id);
-
-        if (product == null)
-        {
-            return NotFound();
-        }
-
-        return View(product);
+        return View(productVm);
     }
 
     [HttpPost]
-    public IActionResult Edit(Product product)
+    public IActionResult Upsert(ProductViewModel productVm)
     {
         if (ModelState.IsValid)
         {
-            this.unitOfWork.ProductRepository.Update(product);
-            this.unitOfWork.Save();
+            if (productVm.Product.Id != 0)
+            {
+                this.unitOfWork.ProductRepository.Add(productVm.Product);
+                TempData["success"] = string.Format(WebConstants.SuccessCreateNotification, nameof(Product));
+            }
+            else
+            {
+                this.unitOfWork.ProductRepository.Update(productVm.Product);
+                TempData["success"] = string.Format(WebConstants.SuccessEditNotification, nameof(Product));
+            }
 
-            TempData["success"] = string.Format(WebConstants.SuccessEditNotification, nameof(Product));
+            this.unitOfWork.Save();
 
             return RedirectToAction("Index");
         }
+        else
+        {
+            productVm.CategoryList = this.unitOfWork.CategoryRepository
+                .GetAll()
+                .Select(x => new SelectListItem
+                {
+                    Text = x.Name,
+                    Value = x.Id.ToString()
+                })
+                .ToList();
 
-        return View();
+            return View(productVm);
+        }
     }
 
     #region Api Calls
