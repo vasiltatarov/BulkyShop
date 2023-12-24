@@ -24,8 +24,8 @@ public class CategoryController : Controller
     {
         if (ModelState.IsValid)
         {
-            unitOfWork.CategoryRepository.Add(category);
-            unitOfWork.Save();
+            this.unitOfWork.CategoryRepository.Add(category);
+            this.unitOfWork.Save();
 
             TempData["success"] = string.Format(WebConstants.SuccessCreateNotification, nameof(Category));
 
@@ -37,7 +37,7 @@ public class CategoryController : Controller
 
     public IActionResult Edit(int id)
     {
-        var category = unitOfWork.CategoryRepository.Get(x => x.Id == id);
+        var category = this.unitOfWork.CategoryRepository.Get(x => x.Id == id);
 
         if (category == null)
         {
@@ -52,8 +52,8 @@ public class CategoryController : Controller
     {
         if (ModelState.IsValid)
         {
-            unitOfWork.CategoryRepository.Update(category);
-            unitOfWork.Save();
+            this.unitOfWork.CategoryRepository.Update(category);
+            this.unitOfWork.Save();
 
             TempData["success"] = string.Format(WebConstants.SuccessEditNotification, nameof(Category));
 
@@ -65,7 +65,7 @@ public class CategoryController : Controller
 
     public IActionResult Delete(int id)
     {
-        var category = unitOfWork.CategoryRepository.Get(x => x.Id == id);
+        var category = this.unitOfWork.CategoryRepository.Get(x => x.Id == id);
 
         if (category == null)
         {
@@ -78,15 +78,15 @@ public class CategoryController : Controller
     [HttpPost, ActionName("Delete")]
     public IActionResult DeletePOST(int id)
     {
-        var category = unitOfWork.CategoryRepository.Get(x => x.Id == id);
+        var category = this.unitOfWork.CategoryRepository.Get(x => x.Id == id);
 
         if (category == null)
         {
             return NotFound();
         }
 
-        unitOfWork.CategoryRepository.Remove(category);
-        unitOfWork.Save();
+        this.unitOfWork.CategoryRepository.Remove(category);
+        this.unitOfWork.Save();
 
         TempData["success"] = string.Format(WebConstants.SuccessDeleteNotification, nameof(Category));
 
