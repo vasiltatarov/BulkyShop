@@ -3,16 +3,30 @@ namespace BulkyWeb.Areas.Customer.Controllers;
 [Area("Customer")]
 public class HomeController : Controller
 {
-    private readonly ILogger<HomeController> _logger;
+    private readonly IUnitOfWork unitOfWork;
 
-    public HomeController(ILogger<HomeController> logger)
+    public HomeController(IUnitOfWork unitOfWork)
     {
-        _logger = logger;
+        this.unitOfWork = unitOfWork;
     }
 
     public IActionResult Index()
     {
-        return View();
+        var products = this.unitOfWork.ProductRepository.GetAll();
+
+        return View(products);
+    }
+
+    public IActionResult Details(int productId)
+    {
+        var product = this.unitOfWork.ProductRepository.Get(x => x.Id == productId, "Category");
+
+        if (product == null)
+        {
+            return NotFound();
+        }
+
+        return View(product);
     }
 
     public IActionResult Privacy()
