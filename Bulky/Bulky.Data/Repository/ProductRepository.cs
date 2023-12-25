@@ -11,6 +11,6 @@ public class ProductRepository : Repository<Product>, IProductRepository
 
     public void Update(Product entity)
     {
-        this.dbContext.Update(entity);
+        this.dbContext.Products.Update(entity);
     }
 }
