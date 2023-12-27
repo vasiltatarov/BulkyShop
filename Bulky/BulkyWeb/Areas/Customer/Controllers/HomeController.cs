@@ -1,6 +1,6 @@
 namespace BulkyWeb.Areas.Customer.Controllers;
 
-[Area("Customer")]
+[Area(SD.Role_Customer)]
 public class HomeController : Controller
 {
     private readonly IUnitOfWork unitOfWork;
@@ -26,7 +26,43 @@ public class HomeController : Controller
             return NotFound();
         }
 
-        return View(product);
+        var cart = new ShopingCart
+        {
+            Product = product,
+            ProductId = productId,
+            Count = 1
+        };
+
+        return View(cart);
+    }
+
+    [HttpPost]
+    [Authorize]
+    public IActionResult Details(ShopingCart cart)
+    {
+        var claimsIdentity = (ClaimsIdentity)User.Identity;
+        var userId = claimsIdentity.FindFirst(ClaimTypes.NameIdentifier).Value;
+        cart.UserId = userId;
+        var cartFromDb = this.unitOfWork.ShopingCartRepository.Get(x => x.ProductId == cart.ProductId && x.UserId == userId);
+
+        if (cartFromDb != null)
+        {
+            //Edit Cart Quantity
+            cartFromDb.Count += cart.Count;
+            this.unitOfWork.ShopingCartRepository.Update(cartFromDb);
+            this.unitOfWork.Save();
+        }
+        else
+        {
+            //Create Cart
+            this.unitOfWork.ShopingCartRepository.Add(cart);
+            this.unitOfWork.Save();
+            // Session
+        }
+
+        TempData["success"] = "Cart updated successfully";
+
+        return RedirectToAction("Index");
     }
 
     public IActionResult Privacy()
