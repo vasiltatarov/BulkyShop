@@ -3,6 +3,7 @@
 using Microsoft.AspNetCore.Identity;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 
 public class ApplicationUser : IdentityUser
 {
@@ -19,9 +20,9 @@ public class ApplicationUser : IdentityUser
 
     public int? CompanyId { get; set; }
 
-    //[ForeignKey("CompanyId")]
-    //[ValidateNever]
-    //public Company? Company { get; set; }
+    [ForeignKey("CompanyId")]
+    [ValidateNever]
+    public Company Company { get; set; }
 
     [NotMapped]
     public string Role { get; set; }

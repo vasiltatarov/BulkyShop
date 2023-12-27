@@ -112,10 +112,10 @@ namespace BulkyWeb.Areas.Identity.Pages.Account
 
             public string PhoneNumber { get; set; }
 
-            //public int? CompanyId { get; set; }
+            public int? CompanyId { get; set; }
 
-            //[ValidateNever]
-            //public IEnumerable<SelectListItem> CompanyList { get; set; }
+            [ValidateNever]
+            public IEnumerable<SelectListItem> CompanyList { get; set; }
         }
 
         public async Task OnGetAsync(string returnUrl = null)
@@ -134,12 +134,12 @@ namespace BulkyWeb.Areas.Identity.Pages.Account
                 {
                     Text = i,
                     Value = i
+                }),
+                CompanyList = _unitOfWork.CompanyRepository.GetAll().Select(i => new SelectListItem
+                {
+                    Text = i.Name,
+                    Value = i.Id.ToString()
                 })
-                //CompanyList = _unitOfWork.Company.GetAll().Select(i => new SelectListItem
-                //{
-                //    Text = i.Name,
-                //    Value = i.Id.ToString()
-                //})
             };
 
             ReturnUrl = returnUrl;
@@ -165,10 +165,10 @@ namespace BulkyWeb.Areas.Identity.Pages.Account
                 user.PostalCode = Input.PostalCode;
                 user.PhoneNumber = Input.PhoneNumber;
 
-                //if (Input.Role == SD.Role_Company)
-                //{
-                //    user.CompanyId = Input.CompanyId;
-                //}
+                if (Input.Role == SD.Role_Company)
+                {
+                    user.CompanyId = Input.CompanyId;
+                }
 
                 var result = await _userManager.CreateAsync(user, Input.Password);
 
