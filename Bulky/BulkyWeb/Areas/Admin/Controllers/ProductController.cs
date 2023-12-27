@@ -1,6 +1,6 @@
 ﻿namespace BulkyWeb.Areas.Admin.Controllers;
 
-[Area("Admin")]
+[Area(SD.Role_Admin)]
 public class ProductController : Controller
 {
     private const string ImagesPath = @"images\products";
