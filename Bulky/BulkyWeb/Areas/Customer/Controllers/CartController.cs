@@ -26,6 +26,11 @@ public class CartController : Controller
         return View(viewModel);
     }
 
+    public IActionResult Summary()
+    {
+        return View();
+    }
+
     public IActionResult Plus(int cartId)
     {
         var cartFromDb = this.unitOfWork.ShopingCartRepository.Get(x => x.Id == cartId);

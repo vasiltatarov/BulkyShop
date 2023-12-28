@@ -12,6 +12,8 @@ public class UnitOfWork : IUnitOfWork
         this.ProductRepository = new ProductRepository(dbContext);
         this.CompanyRepository = new CompanyRepository(dbContext);
         this.ShopingCartRepository = new ShopingCartRepository(dbContext);
+        this.OrderHeaderRepository = new OrderHeaderRepository(dbContext);
+        this.OrderDetailRepository = new OrderDetailRepository(dbContext);
     }
 
     public ICategoryRepository CategoryRepository { get; private set; }
@@ -23,6 +25,10 @@ public class UnitOfWork : IUnitOfWork
     public IShopingCartRepository ShopingCartRepository { get; private set; }
 
     public IApplicationUserRepository ApplicationUserRepository { get; private set; }
+
+    public IOrderHeaderRepository OrderHeaderRepository { get; private set; }
+
+    public IOrderDetailRepository OrderDetailRepository { get; private set; }
 
     public void Save()
     {

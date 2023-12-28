@@ -42,8 +42,8 @@ public class Product
 
     public int CategoryId { get; set; }
 
-    [ForeignKey("CategoryId")]
     [ValidateNever]
+    [ForeignKey("CategoryId")]
     public Category Category { get; set; }
 
     [ValidateNever]

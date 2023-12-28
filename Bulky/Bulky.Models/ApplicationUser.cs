@@ -20,8 +20,8 @@ public class ApplicationUser : IdentityUser
 
     public int? CompanyId { get; set; }
 
-    [ForeignKey("CompanyId")]
     [ValidateNever]
+    [ForeignKey("CompanyId")]
     public Company Company { get; set; }
 
     [NotMapped]

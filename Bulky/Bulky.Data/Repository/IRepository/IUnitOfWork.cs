@@ -10,6 +10,10 @@ public interface IUnitOfWork
 
     IShopingCartRepository ShopingCartRepository { get; }
 
+    IOrderHeaderRepository OrderHeaderRepository { get; }
+
+    IOrderDetailRepository OrderDetailRepository { get; }
+
     IApplicationUserRepository ApplicationUserRepository { get; }
 
     void Save();
