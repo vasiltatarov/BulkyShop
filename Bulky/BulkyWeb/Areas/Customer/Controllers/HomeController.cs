@@ -50,16 +50,15 @@ public class HomeController : Controller
             //Edit Cart Quantity
             cartFromDb.Count += cart.Count;
             this.unitOfWork.ShopingCartRepository.Update(cartFromDb);
-            this.unitOfWork.Save();
         }
         else
         {
             //Create Cart
             this.unitOfWork.ShopingCartRepository.Add(cart);
-            this.unitOfWork.Save();
             // Session
         }
 
+        this.unitOfWork.Save();
         TempData["success"] = "Cart updated successfully";
 
         return RedirectToAction("Index");
