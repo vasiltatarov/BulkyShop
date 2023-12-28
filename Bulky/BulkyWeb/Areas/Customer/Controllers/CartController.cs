@@ -1,5 +1,7 @@
 ﻿namespace BulkyWeb.Areas.Customer.Controllers;
 
+using Bulky.Models;
+
 [Area(SD.Role_Customer)]
 [Authorize]
 public class CartController : Controller
@@ -11,32 +13,102 @@ public class CartController : Controller
         this.unitOfWork = unitOfWork;
     }
 
+    [BindProperty]
+    public ShoppingCartVM ShoppingCartVM { get; set; }
+
     public IActionResult Index()
     {
         var userClaims = (ClaimsIdentity)User.Identity;
         var userId = userClaims.FindFirst(ClaimTypes.NameIdentifier).Value;
 
-        var viewModel = new ShoppingCartVM
+        this.ShoppingCartVM = new()
         {
-            ShoppingCartList = this.unitOfWork.ShopingCartRepository.GetAll(x => x.UserId == userId, "Product")
+            ShoppingCartList = this.unitOfWork.ShoppingCartRepository.GetAll(x => x.UserId == userId, "Product"),
+            OrderHeader = new()
         };
 
-        this.CalculatePrices(viewModel);
+        this.CalculateTotalPrice();
 
-        return View(viewModel);
+        return View(this.ShoppingCartVM);
     }
 
     public IActionResult Summary()
     {
-        return View();
+        var userClaims = (ClaimsIdentity)User.Identity;
+        var userId = userClaims.FindFirst(ClaimTypes.NameIdentifier).Value;
+
+        this.ShoppingCartVM = new()
+        {
+            ShoppingCartList = this.unitOfWork.ShoppingCartRepository.GetAll(x => x.UserId == userId, "Product"),
+            OrderHeader = new()
+        };
+
+        var user = this.unitOfWork.ApplicationUserRepository.Get(u => u.Id == userId);
+
+        this.ShoppingCartVM.OrderHeader.User = user;
+        this.ShoppingCartVM.OrderHeader.Name = user.Name;
+        this.ShoppingCartVM.OrderHeader.PhoneNumber = user.PhoneNumber;
+        this.ShoppingCartVM.OrderHeader.StreetAddress = user.StreetAddress;
+        this.ShoppingCartVM.OrderHeader.City = user.City;
+        this.ShoppingCartVM.OrderHeader.State = user.State;
+        this.ShoppingCartVM.OrderHeader.PostalCode = user.PostalCode;
+
+        this.CalculateTotalPrice();
+
+        return View(this.ShoppingCartVM);
+    }
+
+    [HttpPost]
+    [ActionName("Summary")]
+    public IActionResult SummaryPost()
+    {
+        var userClaims = (ClaimsIdentity)User.Identity;
+        var userId = userClaims.FindFirst(ClaimTypes.NameIdentifier).Value;
+
+        this.ShoppingCartVM.ShoppingCartList = this.unitOfWork.ShoppingCartRepository.GetAll(x => x.UserId == userId, "Product");
+        this.ShoppingCartVM.OrderHeader.OrderDate = DateTime.Now;
+        this.ShoppingCartVM.OrderHeader.UserId = userId;
+
+        var user = this.unitOfWork.ApplicationUserRepository.Get(u => u.Id == userId);
+
+        if (user.CompanyId.HasValue && user.CompanyId.Value != 0)
+        {
+            //it is a company user
+            this.ShoppingCartVM.OrderHeader.PaymentStatus = SD.PaymentStatusDelayedPayment;
+            this.ShoppingCartVM.OrderHeader.OrderStatus = SD.StatusApproved;
+        }
+        else
+        {
+            //it is a regular customer 
+            this.ShoppingCartVM.OrderHeader.PaymentStatus = SD.PaymentStatusPending;
+            this.ShoppingCartVM.OrderHeader.OrderStatus = SD.StatusPending;
+        }
+
+        this.unitOfWork.OrderHeaderRepository.Add(this.ShoppingCartVM.OrderHeader);
+        this.unitOfWork.Save();
+
+        foreach (var cart in this.ShoppingCartVM.ShoppingCartList)
+        {
+            var orderDetail = new OrderDetail
+            {
+                OrderHeaderId = this.ShoppingCartVM.OrderHeader.Id,
+                ProductId = cart.ProductId,
+                Count = cart.Count,
+                Price = cart.Price
+            };
+
+            this.unitOfWork.OrderDetailRepository.Add(orderDetail);
+            this.unitOfWork.Save();
+        }
+
     }
 
     public IActionResult Plus(int cartId)
     {
-        var cartFromDb = this.unitOfWork.ShopingCartRepository.Get(x => x.Id == cartId);
+        var cartFromDb = this.unitOfWork.ShoppingCartRepository.Get(x => x.Id == cartId);
         cartFromDb.Count++;
 
-        this.unitOfWork.ShopingCartRepository.Update(cartFromDb);
+        this.unitOfWork.ShoppingCartRepository.Update(cartFromDb);
         this.unitOfWork.Save();
 
         return RedirectToAction("Index");
@@ -44,12 +116,12 @@ public class CartController : Controller
 
     public IActionResult Minus(int cartId)
     {
-        var cartFromDb = this.unitOfWork.ShopingCartRepository.Get(x => x.Id == cartId);
+        var cartFromDb = this.unitOfWork.ShoppingCartRepository.Get(x => x.Id == cartId);
 
         if (cartFromDb.Count > 1)
         {
             cartFromDb.Count--;
-            this.unitOfWork.ShopingCartRepository.Update(cartFromDb);
+            this.unitOfWork.ShoppingCartRepository.Update(cartFromDb);
             this.unitOfWork.Save();
         }
 
@@ -57,39 +129,45 @@ public class CartController : Controller
     }
     public IActionResult Remove(int cartId)
     {
-        var cartFromDb = this.unitOfWork.ShopingCartRepository.Get(x => x.Id == cartId);
+        var cartFromDb = this.unitOfWork.ShoppingCartRepository.Get(x => x.Id == cartId);
 
-        this.unitOfWork.ShopingCartRepository.Remove(cartFromDb);
+        this.unitOfWork.ShoppingCartRepository.Remove(cartFromDb);
         this.unitOfWork.Save();
 
         return RedirectToAction("Index");
     }
 
-    private void CalculatePrices(ShoppingCartVM cartViewModel)
+    private void CalculateTotalPrice()
     {
         double total = 0;
 
-        foreach (var product in cartViewModel.ShoppingCartList)
+        foreach (var cart in this.ShoppingCartVM.ShoppingCartList)
         {
-            double price = 0;
+            double price = this.GetPriceBasedOnQuantity(cart);
 
-            if (product.Count <= 50)
+            cart.Price = price;
+            total += price * cart.Count;
+        }
+
+        this.ShoppingCartVM.OrderHeader.OrderTotal = total;
+    }
+
+    private double GetPriceBasedOnQuantity(ShoppingCart shoppingCart)
+    {
+        if (shoppingCart.Count <= 50)
+        {
+            return shoppingCart.Product.Price;
+        }
+        else
+        {
+            if (shoppingCart.Count <= 100)
             {
-                price = product.Product.Price;
-            }
-            else if (product.Count <= 100)
-            {
-                price = product.Product.Price50;
+                return shoppingCart.Product.Price50;
             }
             else
             {
-                price = product.Product.Price100;
+                return shoppingCart.Product.Price100;
             }
-
-            product.Price = price;
-            total += price * product.Count;
         }
-
-        cartViewModel.OrderTotal = total;
     }
 }

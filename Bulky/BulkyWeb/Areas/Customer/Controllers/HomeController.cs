@@ -26,7 +26,7 @@ public class HomeController : Controller
             return NotFound();
         }
 
-        var cart = new ShopingCart
+        var cart = new ShoppingCart
         {
             Product = product,
             ProductId = productId,
@@ -38,23 +38,23 @@ public class HomeController : Controller
 
     [HttpPost]
     [Authorize]
-    public IActionResult Details(ShopingCart cart)
+    public IActionResult Details(ShoppingCart cart)
     {
         var claimsIdentity = (ClaimsIdentity)User.Identity;
         var userId = claimsIdentity.FindFirst(ClaimTypes.NameIdentifier).Value;
         cart.UserId = userId;
-        var cartFromDb = this.unitOfWork.ShopingCartRepository.Get(x => x.ProductId == cart.ProductId && x.UserId == userId);
+        var cartFromDb = this.unitOfWork.ShoppingCartRepository.Get(x => x.ProductId == cart.ProductId && x.UserId == userId);
 
         if (cartFromDb != null)
         {
             //Edit Cart Quantity
             cartFromDb.Count += cart.Count;
-            this.unitOfWork.ShopingCartRepository.Update(cartFromDb);
+            this.unitOfWork.ShoppingCartRepository.Update(cartFromDb);
         }
         else
         {
             //Create Cart
-            this.unitOfWork.ShopingCartRepository.Add(cart);
+            this.unitOfWork.ShoppingCartRepository.Add(cart);
             // Session
         }
 

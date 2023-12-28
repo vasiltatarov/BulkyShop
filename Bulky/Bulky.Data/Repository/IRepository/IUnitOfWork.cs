@@ -8,7 +8,7 @@ public interface IUnitOfWork
 
     ICompanyRepository CompanyRepository { get; }
 
-    IShopingCartRepository ShopingCartRepository { get; }
+    IShoppingCartRepository ShoppingCartRepository { get; }
 
     IOrderHeaderRepository OrderHeaderRepository { get; }
 
