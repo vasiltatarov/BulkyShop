@@ -71,7 +71,9 @@ public class CartController : Controller
 
         var user = this.unitOfWork.ApplicationUserRepository.Get(u => u.Id == userId);
 
-        if (user.CompanyId.HasValue && user.CompanyId.Value != 0)
+        this.CalculateTotalPrice();
+
+        if (user.CompanyId.GetValueOrDefault() != 0)
         {
             //it is a company user
             this.ShoppingCartVM.OrderHeader.PaymentStatus = SD.PaymentStatusDelayedPayment;
@@ -101,6 +103,18 @@ public class CartController : Controller
             this.unitOfWork.Save();
         }
 
+        if (user.CompanyId.GetValueOrDefault() == 0)
+        {
+            //it's a regular customer account and we need to capture payment
+            //stripe logic
+        }
+
+        return RedirectToAction("OrderConfirmation", new { id = this.ShoppingCartVM.OrderHeader.Id });
+    }
+
+    public IActionResult OrderConfirmation(int id)
+    {
+        return View(id);
     }
 
     public IActionResult Plus(int cartId)
