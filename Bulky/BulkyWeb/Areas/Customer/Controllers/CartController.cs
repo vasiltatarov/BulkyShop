@@ -1,6 +1,6 @@
 ﻿namespace BulkyWeb.Areas.Customer.Controllers;
 
-using Bulky.Models;
+using Stripe.Checkout;
 
 [Area(SD.Role_Customer)]
 [Authorize]
@@ -107,6 +107,44 @@ public class CartController : Controller
         {
             //it's a regular customer account and we need to capture payment
             //stripe logic
+
+            var domein = "http://localhost:5237/";
+            var options = new SessionCreateOptions
+            {
+                SuccessUrl = $"{domein}Customer/Cart/OrderConfirmation?id={this.ShoppingCartVM.OrderHeader.Id}",
+                CancelUrl = $"{domein}Customer/Cart/Index",
+                LineItems = new List<SessionLineItemOptions>(),
+                Mode = "payment",
+            };
+
+            foreach (var cart in this.ShoppingCartVM.ShoppingCartList)
+            {
+                var lineItem = new SessionLineItemOptions
+                {
+                    PriceData = new SessionLineItemPriceDataOptions
+                    {
+                        UnitAmount = (long)cart.Price * 100, // 20.50 * 100 => 2050
+                        Currency = "BGN",
+                        ProductData = new SessionLineItemPriceDataProductDataOptions
+                        {
+                            Name = cart.Product.Title
+                        }
+                    },
+                    Quantity = cart.Count
+                };
+
+                options.LineItems.Add(lineItem);
+            }
+
+            var service = new SessionService();
+            var session = service.Create(options);
+
+            this.unitOfWork.OrderHeaderRepository.UpdateStripePaymentID(this.ShoppingCartVM.OrderHeader.Id, session.Id, session.PaymentIntentId);
+            this.unitOfWork.Save();
+
+            Response.Headers.Add("Location", session.Url);
+
+            return new StatusCodeResult(303);
         }
 
         return RedirectToAction("OrderConfirmation", new { id = this.ShoppingCartVM.OrderHeader.Id });
@@ -114,6 +152,27 @@ public class CartController : Controller
 
     public IActionResult OrderConfirmation(int id)
     {
+        var orderHeader = this.unitOfWork.OrderHeaderRepository.Get(x => x.Id == id, "User");
+
+        if (orderHeader.PaymentStatus != SD.PaymentStatusDelayedPayment)
+        {
+            //this is an order by customer
+
+            var service = new SessionService();
+            var session = service.Get(orderHeader.SessionId);
+
+            if (session.PaymentStatus.ToLower() == "paid")
+            {
+                this.unitOfWork.OrderHeaderRepository.UpdateStripePaymentID(id, session.Id, session.PaymentIntentId);
+                this.unitOfWork.OrderHeaderRepository.UpdateStatus(id, SD.StatusApproved, SD.PaymentStatusApproved);
+                this.unitOfWork.Save();
+            }
+        }
+
+        var shoppingCarts = this.unitOfWork.ShoppingCartRepository.GetAll(x => x.UserId == orderHeader.UserId);
+        this.unitOfWork.ShoppingCartRepository.RemoveRange(shoppingCarts);
+        this.unitOfWork.Save();
+
         return View(id);
     }
 
