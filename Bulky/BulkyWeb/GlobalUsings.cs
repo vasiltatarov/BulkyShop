@@ -17,3 +17,5 @@ global using Bulky.Models;
 global using Bulky.Models.ViewModels;
 
 global using Bulky.Utility;
+
+global using Stripe;
