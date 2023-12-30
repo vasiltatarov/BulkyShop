@@ -207,6 +207,8 @@ public class CartController : Controller
         this.unitOfWork.ShoppingCartRepository.Remove(cartFromDb);
         this.unitOfWork.Save();
 
+        HttpContext.Session.SetInt32(SD.SessionCart, this.unitOfWork.ShoppingCartRepository.GetAll(x => x.UserId == cartFromDb.UserId).Count());
+
         return RedirectToAction("Index");
     }
 
