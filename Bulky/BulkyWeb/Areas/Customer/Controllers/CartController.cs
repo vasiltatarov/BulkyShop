@@ -167,6 +167,8 @@ public class CartController : Controller
                 this.unitOfWork.OrderHeaderRepository.UpdateStatus(id, SD.StatusApproved, SD.PaymentStatusApproved);
                 this.unitOfWork.Save();
             }
+
+            HttpContext.Session.Clear();
         }
 
         var shoppingCarts = this.unitOfWork.ShoppingCartRepository.GetAll(x => x.UserId == orderHeader.UserId);
