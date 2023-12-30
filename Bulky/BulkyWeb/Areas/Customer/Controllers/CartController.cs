@@ -14,14 +14,14 @@ public class CartController : Controller
     }
 
     [BindProperty]
-    public ShoppingCartVM ShoppingCartVM { get; set; }
+    public ShoppingCartViewModel ShoppingCartViewModel { get; set; }
 
     public IActionResult Index()
     {
         var userClaims = (ClaimsIdentity)User.Identity;
         var userId = userClaims.FindFirst(ClaimTypes.NameIdentifier).Value;
 
-        this.ShoppingCartVM = new()
+        this.ShoppingCartViewModel = new()
         {
             ShoppingCartList = this.unitOfWork.ShoppingCartRepository.GetAll(x => x.UserId == userId, "Product"),
             OrderHeader = new()
@@ -29,7 +29,7 @@ public class CartController : Controller
 
         this.CalculateTotalPrice();
 
-        return View(this.ShoppingCartVM);
+        return View(this.ShoppingCartViewModel);
     }
 
     public IActionResult Summary()
@@ -37,7 +37,7 @@ public class CartController : Controller
         var userClaims = (ClaimsIdentity)User.Identity;
         var userId = userClaims.FindFirst(ClaimTypes.NameIdentifier).Value;
 
-        this.ShoppingCartVM = new()
+        this.ShoppingCartViewModel = new()
         {
             ShoppingCartList = this.unitOfWork.ShoppingCartRepository.GetAll(x => x.UserId == userId, "Product"),
             OrderHeader = new()
@@ -45,17 +45,17 @@ public class CartController : Controller
 
         var user = this.unitOfWork.ApplicationUserRepository.Get(u => u.Id == userId);
 
-        this.ShoppingCartVM.OrderHeader.User = user;
-        this.ShoppingCartVM.OrderHeader.Name = user.Name;
-        this.ShoppingCartVM.OrderHeader.PhoneNumber = user.PhoneNumber;
-        this.ShoppingCartVM.OrderHeader.StreetAddress = user.StreetAddress;
-        this.ShoppingCartVM.OrderHeader.City = user.City;
-        this.ShoppingCartVM.OrderHeader.State = user.State;
-        this.ShoppingCartVM.OrderHeader.PostalCode = user.PostalCode;
+        this.ShoppingCartViewModel.OrderHeader.User = user;
+        this.ShoppingCartViewModel.OrderHeader.Name = user.Name;
+        this.ShoppingCartViewModel.OrderHeader.PhoneNumber = user.PhoneNumber;
+        this.ShoppingCartViewModel.OrderHeader.StreetAddress = user.StreetAddress;
+        this.ShoppingCartViewModel.OrderHeader.City = user.City;
+        this.ShoppingCartViewModel.OrderHeader.State = user.State;
+        this.ShoppingCartViewModel.OrderHeader.PostalCode = user.PostalCode;
 
         this.CalculateTotalPrice();
 
-        return View(this.ShoppingCartVM);
+        return View(this.ShoppingCartViewModel);
     }
 
     [HttpPost]
@@ -65,9 +65,9 @@ public class CartController : Controller
         var userClaims = (ClaimsIdentity)User.Identity;
         var userId = userClaims.FindFirst(ClaimTypes.NameIdentifier).Value;
 
-        this.ShoppingCartVM.ShoppingCartList = this.unitOfWork.ShoppingCartRepository.GetAll(x => x.UserId == userId, "Product");
-        this.ShoppingCartVM.OrderHeader.OrderDate = DateTime.Now;
-        this.ShoppingCartVM.OrderHeader.UserId = userId;
+        this.ShoppingCartViewModel.ShoppingCartList = this.unitOfWork.ShoppingCartRepository.GetAll(x => x.UserId == userId, "Product");
+        this.ShoppingCartViewModel.OrderHeader.OrderDate = DateTime.Now;
+        this.ShoppingCartViewModel.OrderHeader.UserId = userId;
 
         var user = this.unitOfWork.ApplicationUserRepository.Get(u => u.Id == userId);
 
@@ -76,24 +76,24 @@ public class CartController : Controller
         if (user.CompanyId.GetValueOrDefault() != 0)
         {
             //it is a company user
-            this.ShoppingCartVM.OrderHeader.PaymentStatus = SD.PaymentStatusDelayedPayment;
-            this.ShoppingCartVM.OrderHeader.OrderStatus = SD.StatusApproved;
+            this.ShoppingCartViewModel.OrderHeader.PaymentStatus = SD.PaymentStatusDelayedPayment;
+            this.ShoppingCartViewModel.OrderHeader.OrderStatus = SD.StatusApproved;
         }
         else
         {
             //it is a regular customer 
-            this.ShoppingCartVM.OrderHeader.PaymentStatus = SD.PaymentStatusPending;
-            this.ShoppingCartVM.OrderHeader.OrderStatus = SD.StatusPending;
+            this.ShoppingCartViewModel.OrderHeader.PaymentStatus = SD.PaymentStatusPending;
+            this.ShoppingCartViewModel.OrderHeader.OrderStatus = SD.StatusPending;
         }
 
-        this.unitOfWork.OrderHeaderRepository.Add(this.ShoppingCartVM.OrderHeader);
+        this.unitOfWork.OrderHeaderRepository.Add(this.ShoppingCartViewModel.OrderHeader);
         this.unitOfWork.Save();
 
-        foreach (var cart in this.ShoppingCartVM.ShoppingCartList)
+        foreach (var cart in this.ShoppingCartViewModel.ShoppingCartList)
         {
             var orderDetail = new OrderDetail
             {
-                OrderHeaderId = this.ShoppingCartVM.OrderHeader.Id,
+                OrderHeaderId = this.ShoppingCartViewModel.OrderHeader.Id,
                 ProductId = cart.ProductId,
                 Count = cart.Count,
                 Price = cart.Price
@@ -108,16 +108,16 @@ public class CartController : Controller
             //it's a regular customer account and we need to capture payment
             //stripe logic
 
-            var domein = "http://localhost:5237/";
+            var domain = "http://localhost:5237/";
             var options = new SessionCreateOptions
             {
-                SuccessUrl = $"{domein}Customer/Cart/OrderConfirmation?id={this.ShoppingCartVM.OrderHeader.Id}",
-                CancelUrl = $"{domein}Customer/Cart/Index",
+                SuccessUrl = $"{domain}Customer/Cart/OrderConfirmation?id={this.ShoppingCartViewModel.OrderHeader.Id}",
+                CancelUrl = $"{domain}Customer/Cart/Index",
                 LineItems = new List<SessionLineItemOptions>(),
                 Mode = "payment",
             };
 
-            foreach (var cart in this.ShoppingCartVM.ShoppingCartList)
+            foreach (var cart in this.ShoppingCartViewModel.ShoppingCartList)
             {
                 var lineItem = new SessionLineItemOptions
                 {
@@ -139,7 +139,7 @@ public class CartController : Controller
             var service = new SessionService();
             var session = service.Create(options);
 
-            this.unitOfWork.OrderHeaderRepository.UpdateStripePaymentID(this.ShoppingCartVM.OrderHeader.Id, session.Id, session.PaymentIntentId);
+            this.unitOfWork.OrderHeaderRepository.UpdateStripePaymentID(this.ShoppingCartViewModel.OrderHeader.Id, session.Id, session.PaymentIntentId);
             this.unitOfWork.Save();
 
             Response.Headers.Add("Location", session.Url);
@@ -147,7 +147,7 @@ public class CartController : Controller
             return new StatusCodeResult(303);
         }
 
-        return RedirectToAction("OrderConfirmation", new { id = this.ShoppingCartVM.OrderHeader.Id });
+        return RedirectToAction("OrderConfirmation", new { id = this.ShoppingCartViewModel.OrderHeader.Id });
     }
 
     public IActionResult OrderConfirmation(int id)
@@ -214,7 +214,7 @@ public class CartController : Controller
     {
         double total = 0;
 
-        foreach (var cart in this.ShoppingCartVM.ShoppingCartList)
+        foreach (var cart in this.ShoppingCartViewModel.ShoppingCartList)
         {
             double price = this.GetPriceBasedOnQuantity(cart);
 
@@ -222,7 +222,7 @@ public class CartController : Controller
             total += price * cart.Count;
         }
 
-        this.ShoppingCartVM.OrderHeader.OrderTotal = total;
+        this.ShoppingCartViewModel.OrderHeader.OrderTotal = total;
     }
 
     private double GetPriceBasedOnQuantity(ShoppingCart shoppingCart)

@@ -1,6 +1,6 @@
 ﻿namespace Bulky.Models.ViewModels;
 
-public class ShoppingCartVM
+public class ShoppingCartViewModel
 {
     public IEnumerable<ShoppingCart> ShoppingCartList { get; set; }
 
