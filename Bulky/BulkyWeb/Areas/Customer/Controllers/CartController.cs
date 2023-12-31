@@ -108,7 +108,7 @@ public class CartController : Controller
             //it's a regular customer account and we need to capture payment
             //stripe logic
 
-            var domain = "http://localhost:5237/";
+            var domain = Request.Scheme + "://" + Request.Host.Value + "/";
             var options = new SessionCreateOptions
             {
                 SuccessUrl = $"{domain}Customer/Cart/OrderConfirmation?id={this.ShoppingCartViewModel.OrderHeader.Id}",
