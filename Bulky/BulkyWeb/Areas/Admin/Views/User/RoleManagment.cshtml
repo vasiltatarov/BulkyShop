@@ -1,4 +1,4 @@
-﻿@* @model RoleManagmentViewModel
+﻿@model RoleManagmentViewModel
 
 <div class="card shadow border-0 mt-4">
     <div class="card-header bg-secondary bg-gradient ml-0 py-3">
@@ -10,25 +10,24 @@
     </div>
     <div class="card-body p-4">
         <form method="post" class="row">
-            <input asp-for="ApplicationUser.Id" hidden />
+            <input asp-for="User.Id" hidden />
             <div class="border p-3">
                 <div class="form-floating py-2 col-12">
-                    <input asp-for="ApplicationUser.Name" readonly class="form-control border-0 shadow" />
-                    <label asp-for="ApplicationUser.Name" class="ms-2"></label>
+                    <input asp-for="User.Name" readonly class="form-control border-0 shadow" />
+                    <label asp-for="User.Name" class="ms-2"></label>
                 </div>
                 <div class="form-floating py-2 col-12">
-                    <select asp-for="ApplicationUser.Role" asp-items="@Model.RoleList" class="form-select"></select>
+                    <select asp-for="User.Role" asp-items="@Model.Roles" class="form-select"></select>
                 </div>
                 @{
                     var companyVisible = "display:none;";
                 }
-                @if (Model.ApplicationUser.Role == SD.Role_Company)
+                @if (Model.User.Role == SD.Role_Company)
                 {
                     companyVisible = "display:block;";
                 }
                 <div class="form-floating py-2 col-12">
-                    <select asp-for="ApplicationUser.CompanyId" style="@companyVisible" asp-items="@Model.CompanyList" class="form-select">
-                    </select>
+                    <select asp-for="User.CompanyId" style="@companyVisible" asp-items="@Model.Companies" class="form-select"></select>
                 </div>
 
                 <div class="row pt-2">
@@ -52,15 +51,15 @@
     }
     <script>
         $(document).ready(function () {
-            $('#ApplicationUser_Role').change(function () {
-                var selection = $('#ApplicationUser_Role Option:Selected').text();
+            $('#User_Role').change(function () {
+                var selection = $('#User_Role Option:Selected').text();
                 if (selection == 'Company') {
-                    $('#ApplicationUser_CompanyId').show();
+                    $('#User_CompanyId').show();
                 }
                 else {
-                    $('#ApplicationUser_CompanyId').hide();
+                    $('#User_CompanyId').hide();
                 }
             })
         })
     </script>
-} *@
+}

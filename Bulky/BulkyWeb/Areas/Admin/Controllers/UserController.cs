@@ -1,21 +1,86 @@
 ﻿namespace BulkyWeb.Areas.Admin.Controllers;
 
+using Bulky.Models;
+using Microsoft.AspNetCore.Identity;
+
 [Area(SD.Role_Admin)]
 [Authorize]
 public class UserController : Controller
 {
     private readonly IUnitOfWork unitOfWork;
     private readonly UserManager<IdentityUser> userManager;
+    private readonly RoleManager<IdentityRole> roleManager;
 
-    public UserController(IUnitOfWork unitOfWork, UserManager<IdentityUser> userManager)
+    public UserController(IUnitOfWork unitOfWork, UserManager<IdentityUser> userManager, RoleManager<IdentityRole> roleManager)
     {
         this.unitOfWork = unitOfWork;
         this.userManager = userManager;
+        this.roleManager = roleManager;
     }
 
     public IActionResult Index()
     {
         return View();
+    }
+
+    public IActionResult RoleManagment(string userId)
+    {
+        var user = this.unitOfWork.ApplicationUserRepository.Get(x => x.Id == userId);
+        var viewModel = new RoleManagmentViewModel
+        {
+            User = user,
+            Companies = this.unitOfWork.CompanyRepository.GetAll().Select(x => new SelectListItem
+            {
+                Text = x.Name,
+                Value = x.Id.ToString()
+            }),
+            Roles = this.roleManager.Roles.Select(x => new SelectListItem
+            {
+                Text= x.Name,
+                Value = x.Name
+            }),
+        };
+
+        viewModel.User.Role = this.userManager.GetRolesAsync(user).GetAwaiter().GetResult().FirstOrDefault();
+
+        return View(viewModel);
+    }
+
+    [HttpPost]
+    public IActionResult RoleManagment(RoleManagmentViewModel roleManagmentViewModel)
+    {
+        var user = this.unitOfWork.ApplicationUserRepository.Get(x => x.Id == roleManagmentViewModel.User.Id);
+        var oldRole = this.userManager.GetRolesAsync(user).GetAwaiter().GetResult().FirstOrDefault();
+
+        if (roleManagmentViewModel.User.Role == oldRole)
+        {
+            if (oldRole == SD.Role_Company && user.CompanyId != roleManagmentViewModel.User.CompanyId)
+            {
+                user.CompanyId = roleManagmentViewModel.User.CompanyId;
+                this.unitOfWork.ApplicationUserRepository.Update(user);
+                this.unitOfWork.Save();
+            }
+        }
+        else
+        {
+            if (roleManagmentViewModel.User.Role == SD.Role_Company)
+            {
+                user.CompanyId = roleManagmentViewModel.User.CompanyId;
+            }
+
+            if (oldRole == SD.Role_Company)
+            {
+                user.CompanyId = null;
+            }
+
+            this.unitOfWork.ApplicationUserRepository.Update(user);
+            this.unitOfWork.Save();
+
+            this.userManager.RemoveFromRoleAsync(user, oldRole).GetAwaiter().GetResult();
+            this.userManager.AddToRoleAsync(user, roleManagmentViewModel.User.Role).GetAwaiter().GetResult();
+        }
+
+        return RedirectToAction("Index");
     }
 
     #region Api Calls
