@@ -1,6 +1,6 @@
 ﻿namespace BulkyWeb.Areas.Admin.Controllers;
 
-//using Stripe;
+using Stripe;
 using Stripe.Checkout;
 
 [Area(SD.Role_Admin)]
@@ -163,36 +163,36 @@ public class OrderController : Controller
         return RedirectToAction(nameof(Details), new { orderId = orderHeader.Id });
     }
 
-    //[HttpPost]
-    //[Authorize(Roles = SD.Role_Admin + "," + SD.Role_Employee)]
-    //public IActionResult CancelOrder()
-    //{
-    //    var orderHeader = this.unitOfWork.OrderHeaderRepository.Get(x => x.Id == this.OrderViewModel.OrderHeader.Id);
+    [HttpPost]
+    [Authorize(Roles = SD.Role_Admin + "," + SD.Role_Employee)]
+    public IActionResult CancelOrder()
+    {
+        var orderHeader = this.unitOfWork.OrderHeaderRepository.Get(x => x.Id == this.OrderViewModel.OrderHeader.Id);
 
-    //    if (orderHeader.PaymentStatus == SD.PaymentStatusApproved)
-    //    {
-    //        var options = new RefundCreateOptions
-    //        {
-    //            Reason = RefundReasons.RequestedByCustomer,
-    //            PaymentIntent = orderHeader.PaymentIntentId
-    //        };
+        if (orderHeader.PaymentStatus == SD.PaymentStatusApproved)
+        {
+            var options = new RefundCreateOptions
+            {
+                Reason = RefundReasons.RequestedByCustomer,
+                PaymentIntent = orderHeader.PaymentIntentId
+            };
 
-    //        var service = new RefundService();
-    //        Refund refund = service.Create(options);
+            var service = new RefundService();
+            Refund refund = service.Create(options);
 
-    //        this.unitOfWork.OrderHeaderRepository.UpdateStatus(orderHeader.Id, SD.StatusCancelled, SD.StatusRefunded);
-    //        TempData["Success"] = WebConstants.OrderRefundedAndCanceled;
-    //    }
-    //    else
-    //    {
-    //        this.unitOfWork.OrderHeaderRepository.UpdateStatus(orderHeader.Id, SD.StatusCancelled, SD.StatusCancelled);
-    //        TempData["Success"] = WebConstants.OrderCanceled;
-    //    }
+            this.unitOfWork.OrderHeaderRepository.UpdateStatus(orderHeader.Id, SD.StatusCancelled, SD.StatusRefunded);
+            TempData["Success"] = WebConstants.OrderRefundedAndCanceled;
+        }
+        else
+        {
+            this.unitOfWork.OrderHeaderRepository.UpdateStatus(orderHeader.Id, SD.StatusCancelled, SD.StatusCancelled);
+            TempData["Success"] = WebConstants.OrderCanceled;
+        }
 
-    //    this.unitOfWork.Save();
+        this.unitOfWork.Save();
 
-    //    return RedirectToAction(nameof(Details), new { orderId = orderHeader.Id });
-    //}
+        return RedirectToAction(nameof(Details), new { orderId = orderHeader.Id });
+    }
 
     #region Api Calls
 

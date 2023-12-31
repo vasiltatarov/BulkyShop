@@ -2,7 +2,15 @@
 
 public class ApplicationUserRepository : Repository<ApplicationUser>, IApplicationUserRepository
 {
-	public ApplicationUserRepository(ApplicationDbContext dbContext) : base(dbContext)
+    private readonly ApplicationDbContext dbContext;
+
+    public ApplicationUserRepository(ApplicationDbContext dbContext) : base(dbContext)
 	{
+        this.dbContext = dbContext;
 	}
+
+    public void Update(ApplicationUser entity)
+    {
+        this.dbContext.Update(entity);
+    }
 }

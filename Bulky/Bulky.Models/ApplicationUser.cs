@@ -26,4 +26,7 @@ public class ApplicationUser : IdentityUser
 
     [NotMapped]
     public string Role { get; set; }
+
+    [NotMapped]
+    public string UserCompanyName { get; set; }
 }
