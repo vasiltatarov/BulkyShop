@@ -14,6 +14,7 @@ public class UnitOfWork : IUnitOfWork
         this.ShoppingCartRepository = new ShoppingCartRepository(dbContext);
         this.OrderHeaderRepository = new OrderHeaderRepository(dbContext);
         this.OrderDetailRepository = new OrderDetailRepository(dbContext);
+        this.ProductImageRepository = new ProductImageRepository(dbContext);
     }
 
     public ICategoryRepository CategoryRepository { get; private set; }
@@ -29,6 +30,8 @@ public class UnitOfWork : IUnitOfWork
     public IOrderHeaderRepository OrderHeaderRepository { get; private set; }
 
     public IOrderDetailRepository OrderDetailRepository { get; private set; }
+
+    public IProductImageRepository ProductImageRepository { get; private set; }
 
     public void Save()
     {

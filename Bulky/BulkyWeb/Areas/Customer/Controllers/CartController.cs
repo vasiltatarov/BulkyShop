@@ -1,5 +1,6 @@
 ﻿namespace BulkyWeb.Areas.Customer.Controllers;
 
+using Bulky.Models;
 using Stripe.Checkout;
 
 [Area(SD.Role_Customer)]
@@ -27,7 +28,14 @@ public class CartController : Controller
             OrderHeader = new()
         };
 
-        this.CalculateTotalPrice();
+        var productImages = this.unitOfWork.ProductImageRepository.GetAll();
+
+        foreach (var cart in this.ShoppingCartViewModel.ShoppingCartList)
+        {
+            cart.Product.ProductImages = productImages.Where(x => x.ProductId == cart.Product.Id).ToList();
+            cart.Price = GetPriceBasedOnQuantity(cart);
+            this.ShoppingCartViewModel.OrderHeader.OrderTotal += (cart.Price * cart.Count);
+        }
 
         return View(this.ShoppingCartViewModel);
     }
@@ -53,7 +61,11 @@ public class CartController : Controller
         this.ShoppingCartViewModel.OrderHeader.State = user.State;
         this.ShoppingCartViewModel.OrderHeader.PostalCode = user.PostalCode;
 
-        this.CalculateTotalPrice();
+        foreach (var cart in this.ShoppingCartViewModel.ShoppingCartList)
+        {
+            cart.Price = GetPriceBasedOnQuantity(cart);
+            this.ShoppingCartViewModel.OrderHeader.OrderTotal += (cart.Price * cart.Count);
+        }
 
         return View(this.ShoppingCartViewModel);
     }
@@ -71,7 +83,11 @@ public class CartController : Controller
 
         var user = this.unitOfWork.ApplicationUserRepository.Get(u => u.Id == userId);
 
-        this.CalculateTotalPrice();
+        foreach (var cart in this.ShoppingCartViewModel.ShoppingCartList)
+        {
+            cart.Price = GetPriceBasedOnQuantity(cart);
+            this.ShoppingCartViewModel.OrderHeader.OrderTotal += (cart.Price * cart.Count);
+        }
 
         if (user.CompanyId.GetValueOrDefault() != 0)
         {
@@ -212,21 +228,6 @@ public class CartController : Controller
         HttpContext.Session.SetInt32(SD.SessionCart, this.unitOfWork.ShoppingCartRepository.GetAll(x => x.UserId == cartFromDb.UserId).Count());
 
         return RedirectToAction("Index");
-    }
-
-    private void CalculateTotalPrice()
-    {
-        double total = 0;
-
-        foreach (var cart in this.ShoppingCartViewModel.ShoppingCartList)
-        {
-            double price = this.GetPriceBasedOnQuantity(cart);
-
-            cart.Price = price;
-            total += price * cart.Count;
-        }
-
-        this.ShoppingCartViewModel.OrderHeader.OrderTotal = total;
     }
 
     private double GetPriceBasedOnQuantity(ShoppingCart shoppingCart)

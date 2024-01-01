@@ -12,14 +12,14 @@ public class HomeController : Controller
 
     public IActionResult Index()
     {
-        var products = this.unitOfWork.ProductRepository.GetAll();
+        var products = this.unitOfWork.ProductRepository.GetAll(includeProperties: "ProductImages");
 
         return View(products);
     }
 
     public IActionResult Details(int productId)
     {
-        var product = this.unitOfWork.ProductRepository.Get(x => x.Id == productId, "Category");
+        var product = this.unitOfWork.ProductRepository.Get(x => x.Id == productId, "Category,ProductImages");
 
         if (product == null)
         {
